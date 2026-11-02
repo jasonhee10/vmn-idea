@@ -132,6 +132,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);
 @media (prefers-reduced-motion:reduce){.pulse{animation:none}}
 .note{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;text-align:left}
 .welcome{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;background:var(--surface);border:1.5px solid var(--orange);border-radius:12px;padding:12px 16px;margin-bottom:22px;font-size:15px;max-width:820px}
+.why-err{flex-basis:100%;font-size:13px;color:#d0422b}
 .linkbtn{all:unset;cursor:pointer;font-family:var(--mono);font-weight:600;font-size:13px;color:var(--orange-ink)}
 .linkbtn:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px}
 footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em}
@@ -185,7 +186,7 @@ footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mon
    SUBMIT_URL: paste your Google Apps Script web-app URL here
    (see setup steps). Leave "" to run without saving.
    ============================================================ */
-const SUBMIT_URL = "https://script.google.com/macros/s/AKfycby1zHqEDDRQ_vhazEJTofloYXtb9uzAhombkBBSr4My5mv6G7UGuTcnyUxdEFEl1wgk/exec";
+const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbx__xjINiv6xQfVBDuU5ZSs_F_kUKeshfW6dd82DatO96fg3rx3M3djVHzjOoNYu9A6/exec";
 
 /* Founders rank what they NEED, mentors rank their STRENGTHS.
    Both use this same list so they can be matched. */
@@ -384,15 +385,19 @@ const ROLES = {
   const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
   // The sign-up this browser remembers was removed from the Sheet: forget it.
   const isGone = d => d && d.ok === false && d.error === 'not_found';
-  function forgetSignup(){ store.del('vmn-last'); stopPolling(); goHome(); welcomeBack(); }
+  function forgetSignup(){ store.del('vmn-last'); store.del('vmn-result'); stopPolling(); goHome(); welcomeBack(); }
 
   // Looks up a submission by its random id. Uses JSONP so it works even
   // when the browser can't read Google's reply to the POST.
-  function lookup(sid){
+  async function lookup(sid){
+    try { return await lookupOnce(sid); }
+    catch(e){ await new Promise(r=>setTimeout(r,1500)); return lookupOnce(sid); }
+  }
+  function lookupOnce(sid){
     return new Promise((resolve,reject)=>{
       const cb='vmncb_'+Math.random().toString(36).slice(2);
       const s=document.createElement('script');
-      const t=setTimeout(()=>{ cleanup(); reject(new Error('timeout')); }, 20000);
+      const t=setTimeout(()=>{ cleanup(); reject(new Error('timeout')); }, 30000);
       function cleanup(){ clearTimeout(t); delete window[cb]; s.remove(); }
       window[cb]=data=>{ cleanup(); resolve(data); };
       s.onerror=()=>{ cleanup(); reject(new Error('network')); };
@@ -455,6 +460,7 @@ const ROLES = {
   }
   function renderDone(data){
     stopPolling();
+    if(SUBMIT_URL && data.role==='founder' && data.mentors && data.mentors.length && !data.preview) store.set('vmn-result', {sid:lastSid(), data});
     const first=esc(String(data.name||'').split(' ')[0]);
     const back=`<button class="back" type="button" data-again style="margin:0">← Back to start</button>`;
     let html='', keepPolling=false;
@@ -518,13 +524,19 @@ const ROLES = {
     box.innerHTML=`<span>Welcome back${last.name?', '+esc(String(last.name).split(' ')[0]):''}. You've already signed up as a ${last.role==='founder'?'founder':'mentor'}.</span>${last.role==='founder'?'<button type="button" class="linkbtn" id="see-mine">See my mentors →</button>':''}`;
     const b=$('#see-mine');
     if(b) b.addEventListener('click', async ()=>{
-      b.disabled=true; b.textContent='Loading…';
-      try{
-        const d=await lookup(last.sid);
-        if(d && d.ok){ renderDone(d); return; }
-        if(isGone(d)){ store.del('vmn-last'); box.innerHTML='<span>We couldn\'t find your earlier sign-up. Please sign up again below.</span>'; return; }
-      }catch(e){}
-      b.disabled=false; b.textContent="Couldn't load. Try again →";
+      const cached=store.get('vmn-result');
+      const hasCache=cached && cached.sid===last.sid && cached.data;
+      if(hasCache) renderDone(cached.data);          // show saved mentors instantly
+      else { b.disabled=true; b.textContent='Loading…'; }
+      let d=null, why='';
+      try{ d=await lookup(last.sid); }catch(e){ why = e.message==='timeout' ? 'the matchmaker is slow to respond' : 'no connection to the matchmaker'; }
+      if(d && d.ok){ renderDone(d); return; }
+      if(isGone(d)){ store.del('vmn-last'); store.del('vmn-result'); if(!hasCache) box.innerHTML='<span>We couldn\'t find your earlier sign-up. Please sign up again below.</span>'; return; }
+      if(hasCache) return;                             // keep showing the saved result
+      if(d && d.error) why = 'error: '+String(d.error).slice(0,80);
+      b.disabled=false; b.textContent='Try again →';
+      let m=$('#welcome .why-err'); if(!m){ m=document.createElement('span'); m.className='why-err'; box.appendChild(m); }
+      m.textContent="Couldn't load your mentors ("+(why||'unknown problem')+").";
     });
   }
 
