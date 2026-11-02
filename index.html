@@ -186,7 +186,7 @@ footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mon
    SUBMIT_URL: paste your Google Apps Script web-app URL here
    (see setup steps). Leave "" to run without saving.
    ============================================================ */
-const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbyg1Yn7UKM87Tb_zn6GZM2z_BIbW4fYfDzXv9gn2pCIBFdynOLkPju1vJQ2o5cXIMPh/exec";
+const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbzyyKmeF-0zSBomkWbAc1D8PQmGxcvaFKLREZiVNbQ36pA7ip__kM13S_RnqnZrXiPW/exec";
 
 /* Founders rank what they NEED, mentors rank their STRENGTHS.
    Both use this same list so they can be matched. */
@@ -481,6 +481,11 @@ const ROLES = {
         <h2 style="margin:-8px 0 0">Your ${ms.length===1?'mentor':ms.length+' mentors'}</h2>
         <div class="matches">${ms.map(mentorCard).join('')}</div>
         <p class="sub" style="margin:0">Find them in the room and introduce yourself, starting with <b>${esc(String(ms[0].name).split(' ')[0])}</b>. Ask an organizer if you can't spot someone.</p>${back}`;
+    } else if(data.busy){
+      keepPolling=true;
+      html=`${tick}<h2>Matching just started${first?', '+first:''}.</h2>
+        <p class="sub" style="margin:0"><b>Keep this page open.</b> Your mentors will appear here in a few seconds.</p>
+        <div class="waiting" role="status"><span class="pulse" aria-hidden="true"></span>Finding your mentors…</div>`;
     } else {
       keepPolling=true;
       html=`${tick}<h2>You're in the queue${first?', '+first:''}.</h2>
