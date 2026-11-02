@@ -55,7 +55,7 @@ main{padding-block:40px 72px}
 .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
 
 /* Role picker */
-.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.roles{max-width:820px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .role{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-rows:auto auto 1fr auto;gap:10px;padding:22px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;transition:border-color .15s,transform .15s,box-shadow .15s;min-width:0}
 .role:hover{border-color:var(--orange);transform:translateY(-2px);box-shadow:0 10px 24px -14px rgba(17,64,88,.45)}
 .role:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-color:var(--orange)}
@@ -105,7 +105,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);
 .rank .mv:disabled{opacity:.25;cursor:default}
 
 .submit{all:unset;box-sizing:border-box;cursor:pointer;text-align:center;background:var(--orange);color:#1b0d04;font-weight:600;font-size:16px;padding:13px 20px;border-radius:10px;transition:filter .15s}
-.submit:hover{filter:brightness(1.06)} .submit:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.submit:hover{filter:brightness(1.06)} .submit:disabled{opacity:.6;cursor:wait} .submit:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 
 .done{text-align:center;justify-items:center}
 .done .tick{width:56px;height:56px;border-radius:50%;background:var(--orange);color:#1b0d04;display:grid;place-items:center}
@@ -130,7 +130,7 @@ footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mon
     </nav>
     <div class="hero">
       <h1>Find your match at <em>VMN × IDEA</em></h1>
-      <p>Tell us who you are and what you're looking for. We'll pair founders with the mentors and investors who fit them best.</p>
+      <p>Tell us who you are and what you're looking for. We'll pair each founder with the mentor or investor who fits them best.</p>
     </div>
   </div>
 </header>
@@ -159,55 +159,82 @@ footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mon
 
 <script>
 /* ============================================================
+   SETTINGS
+   SUBMIT_URL: paste your Google Apps Script web-app URL here
+   (see setup steps). Leave "" to run without saving.
+   ============================================================ */
+const SUBMIT_URL = "";
+
+/* Founders rank what they NEED, mentors rank their STRENGTHS.
+   Both use this same list so they can be matched. */
+const SKILLS = [
+  "Business strategy",
+  "Marketing & branding",
+  "Sales & go-to-market",
+  "Fundraising & pitching",
+  "Financial modeling",
+  "Product & UX design",
+  "Software development",
+  "Data analysis & AI/ML",
+  "Operations & supply chain",
+  "Legal & IP"
+];
+
+const INDUSTRIES = [
+  "AI & software",
+  "Fintech",
+  "Healthcare & biotech",
+  "Consumer products",
+  "Food & beverage",
+  "E-commerce & retail",
+  "Edtech",
+  "Climate & energy",
+  "Hardware & robotics",
+  "Media & entertainment",
+  "Real estate & proptech",
+  "Social impact & nonprofit",
+  "Other"
+];
+
+/* ============================================================
    EDIT YOUR QUESTIONS HERE
-   Each role has a title, blurb, and a list of questions.
    Question types: text, email, url, textarea, select, choice
    (pick one), multi (pick many), rank (drag to order).
    Add `required: true` to make a question mandatory.
+   Matching uses these ids, so keep them as they are:
+   founder: name, email, venture, industry, needs
+   mentor:  name, email, company, industries, skills, teams
    ============================================================ */
 const ROLES = {
   founder: {
     title: "Founder",
     blurb: "You're building a venture and want guidance, feedback, or funding.",
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>',
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.620-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>',
     questions: [
       { id:"name", label:"Full name", type:"text", required:true },
       { id:"email", label:"Email", type:"email", required:true },
       { id:"venture", label:"Venture name", type:"text", required:true },
       { id:"stage", label:"Stage", type:"choice", options:["Idea","Prototype","Launched","Revenue"], required:true },
-      { id:"industry", label:"Industry", type:"select", options:["General Products","Tech","Fintech","Healthcare","Other"], required:true },
-      { id:"needs", label:"Rank what you need most", type:"rank", help:"Drag or use the arrows. Top = most important.",
-        options:["Product feedback","Go-to-market","Fundraising","Hiring","Legal & IP","Financial modeling"] },
+      { id:"industry", label:"Industry", type:"select", options:INDUSTRIES, required:true },
+      { id:"needs", label:"Rank the help you need most", type:"rank", help:"Drag or use the arrows. Top = what you need most. We use this to match you with a mentor.",
+        options:SKILLS },
       { id:"pitch", label:"Describe your venture in two sentences", type:"textarea" }
     ]
   },
   mentor: {
     title: "Mentor",
-    blurb: "You've built or advised companies and want to coach a founding team.",
+    blurb: "Operators, VCs, and angel investors who want to coach a founding team.",
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
     questions: [
       { id:"name", label:"Full name", type:"text", required:true },
       { id:"email", label:"Email", type:"email", required:true },
-      { id:"company", label:"Current company & role", type:"text" },
+      { id:"type", label:"I'm joining as", type:"choice", options:["Mentor / operator","VC investor","Angel investor"], required:true },
+      { id:"company", label:"Company or firm & role", type:"text" },
       { id:"linkedin", label:"LinkedIn URL", type:"url" },
-      { id:"industries", label:"Industries you know well", type:"multi", options:["General Products","Tech","Fintech","Healthcare","Other"] },
-      { id:"skills", label:"Rank your strengths", type:"rank", help:"Drag or use the arrows. Top = strongest.",
-        options:["Marketing & branding","Communication & presentation","Financial modeling","Software development","Data analysis","Business strategy"] },
-      { id:"teams", label:"How many teams can you mentor?", type:"choice", options:["1","2","3+"] }
-    ]
-  },
-  vc: {
-    title: "VC Firm",
-    blurb: "You invest in early-stage companies and want to meet promising founders.",
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/><path d="M15 8h5v5"/></svg>',
-    questions: [
-      { id:"name", label:"Your name", type:"text", required:true },
-      { id:"email", label:"Email", type:"email", required:true },
-      { id:"firm", label:"Firm name", type:"text", required:true },
-      { id:"website", label:"Firm website", type:"url" },
-      { id:"stages", label:"Stages you invest in", type:"multi", options:["Pre-seed","Seed","Series A","Series B+"] },
-      { id:"sectors", label:"Sector focus", type:"multi", options:["General Products","Tech","Fintech","Healthcare","Other"] },
-      { id:"check", label:"Typical check size", type:"select", options:["Under $50K","$50K – $250K","$250K – $1M","$1M+"] }
+      { id:"industries", label:"Industries you know well", type:"multi", options:INDUSTRIES, required:true },
+      { id:"skills", label:"Rank your strengths", type:"rank", help:"Drag or use the arrows. Top = your strongest area. We use this to match you with founders.",
+        options:SKILLS },
+      { id:"teams", label:"How many teams can you mentor?", type:"choice", options:["1","2","3"], required:true }
     ]
   }
 };
@@ -328,15 +355,32 @@ const ROLES = {
     return {out, firstBad};
   }
 
-  $('#form').addEventListener('submit', e=>{
+  async function send(role, out){
+    if(!SUBMIT_URL) return;            // preview mode: nothing is saved
+    const answers={};
+    out.forEach(({q,val})=>{ answers[q.id] = Array.isArray(val) ? (q.type==='rank' ? val.join(' > ') : val.join(', ')) : val; });
+    // text/plain avoids a CORS preflight, which Apps Script can't answer
+    await fetch(SUBMIT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({role, answers})});
+  }
+
+  $('#form').addEventListener('submit', async e=>{
     e.preventDefault();
     const {out, firstBad}=collect();
     if(firstBad){ firstBad.scrollIntoView({behavior:'smooth',block:'center'}); const f=firstBad.querySelector('input,select,textarea'); f&&f.focus({preventScroll:true}); return; }
+    const btn=$('#form .submit'); const label=btn.textContent;
+    btn.disabled=true; btn.textContent='Submitting…';
+    try { await send(current, out); }
+    catch(err){
+      btn.disabled=false; btn.textContent=label;
+      let m=$('#form .send-err'); if(!m){ m=document.createElement('p'); m.className='send-err err'; m.style.display='block'; m.style.margin='0'; btn.after(m); }
+      m.textContent="Couldn't submit. Check your connection and try again.";
+      return;
+    }
     const r=ROLES[current];
     const name=(out.find(o=>o.q.id==='name')||{}).val||'';
     $('#done').innerHTML = `<span class="tick"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
       <h2>You're in${name?', '+esc(name.split(' ')[0]):''}.</h2>
-      <p class="sub" style="margin:0">Thanks for signing up as a ${esc(r.title.toLowerCase())}. We'll share your matches before the event.</p>
+      <p class="sub" style="margin:0">Thanks for signing up as a ${esc(r.title.toLowerCase())}. We'll email you your ${current==='founder'?'mentor':'founders'} before the event.</p>
       <dl class="summary">${out.filter(o=>Array.isArray(o.val)?o.val.length:o.val).map(o=>`<div><dt>${esc(o.q.label)}</dt><dd>${esc(Array.isArray(o.val)?(o.q.type==='rank'?o.val.map((v,i)=>`${i+1}. ${v}`).join(' · '):o.val.join(', ')):o.val)}</dd></div>`).join('')}</dl>
       <button class="back" type="button" id="again" style="margin:0">← Back to start</button>`;
     $('#again').addEventListener('click', ()=>{ location.hash=''; });
