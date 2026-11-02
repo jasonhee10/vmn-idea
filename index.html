@@ -186,7 +186,7 @@ footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mon
    SUBMIT_URL: paste your Google Apps Script web-app URL here
    (see setup steps). Leave "" to run without saving.
    ============================================================ */
-const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbx__xjINiv6xQfVBDuU5ZSs_F_kUKeshfW6dd82DatO96fg3rx3M3djVHzjOoNYu9A6/exec";
+const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbyg1Yn7UKM87Tb_zn6GZM2z_BIbW4fYfDzXv9gn2pCIBFdynOLkPju1vJQ2o5cXIMPh/exec";
 
 /* Founders rank what they NEED, mentors rank their STRENGTHS.
    Both use this same list so they can be matched. */
@@ -401,7 +401,7 @@ const ROLES = {
       function cleanup(){ clearTimeout(t); delete window[cb]; s.remove(); }
       window[cb]=data=>{ cleanup(); resolve(data); };
       s.onerror=()=>{ cleanup(); reject(new Error('network')); };
-      s.src=SUBMIT_URL+(SUBMIT_URL.includes('?')?'&':'?')+'sid='+encodeURIComponent(sid)+'&callback='+cb;
+      s.src=SUBMIT_URL+(SUBMIT_URL.includes('?')?'&':'?')+'ref='+encodeURIComponent(sid)+'&callback='+cb;
       document.body.appendChild(s);
     });
   }
