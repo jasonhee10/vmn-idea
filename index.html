@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>VMN × IDEA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: navy masthead band, then a single centered column that swaps between
+   the role picker and the role's question form. Orange is the only accent. */
+:root{
+  --navy:#114058; --navy-deep:#0b2c3d;
+  --orange:#f2762e; --orange-ink:#b84f12;
+  --bg:#f5f7f8; --surface:#ffffff; --fg:#13232c; --muted:#5b6e78; --line:#d6e0e5;
+  --on-navy:#ffffff; --on-navy-muted:#a9c3cf;
+  --focus:rgba(242,118,46,.35);
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c171d; --surface:#132630; --fg:#e8f0f3; --muted:#93a9b4; --line:#24404e;
+    --navy:#0f3a50; --navy-deep:#082230; --orange:#ff8a45; --orange-ink:#ffa46d;
+    --focus:rgba(255,138,69,.35); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c171d; --surface:#132630; --fg:#e8f0f3; --muted:#93a9b4; --line:#24404e;
+  --navy:#0f3a50; --navy-deep:#082230; --orange:#ff8a45; --orange-ink:#ffa46d;
+  --focus:rgba(255,138,69,.35); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy-deep)}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Masthead */
+.mast{background:var(--navy);color:var(--on-navy);position:relative;overflow:hidden}
+.mast::after{content:"";position:absolute;inset:auto -10% -1px -10%;height:6px;background:var(--orange)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:18px;font-family:var(--mono);font-weight:600;font-size:14px;letter-spacing:.04em}
+.mark{display:flex;align-items:center;gap:10px;color:var(--on-navy);text-decoration:none}
+.mark b{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.01em}
+.mark .x{color:var(--orange)}
+.nav .tag{color:var(--on-navy-muted);text-transform:uppercase;font-size:12px;letter-spacing:.12em}
+.hero{padding-block:36px 52px;display:grid;gap:14px}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6vw,60px);line-height:1.02;letter-spacing:-.02em;margin:0;text-wrap:balance;max-width:16ch}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero p{margin:0;max-width:56ch;color:var(--on-navy-muted);font-size:17px}
+
+main{padding-block:40px 72px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+
+/* Role picker */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.role{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-rows:auto auto 1fr auto;gap:10px;padding:22px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;transition:border-color .15s,transform .15s,box-shadow .15s;min-width:0}
+.role:hover{border-color:var(--orange);transform:translateY(-2px);box-shadow:0 10px 24px -14px rgba(17,64,88,.45)}
+.role:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-color:var(--orange)}
+.role .glyph{width:44px;height:44px;border-radius:10px;background:var(--navy);color:var(--on-navy);display:grid;place-items:center}
+.role h3{margin:0;font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.01em}
+.role p{margin:0;color:var(--muted);font-size:15px}
+.role .go{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--orange-ink);letter-spacing:.04em}
+
+/* Form */
+.formwrap{max-width:620px;margin:0 auto}
+.back{all:unset;cursor:pointer;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--muted);display:inline-flex;gap:6px;align-items:center;margin-bottom:18px}
+.back:hover{color:var(--fg)} .back:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:4px}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:28px;display:grid;gap:22px}
+.card h2{margin:0;font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:-.01em;color:var(--fg)}
+.card .sub{margin:-14px 0 0;color:var(--muted)}
+.chip{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;background:var(--navy);color:var(--on-navy);padding:4px 9px;border-radius:999px;margin-bottom:10px}
+.field{display:grid;gap:6px;min-width:0}
+.field>label,.field>.lbl{font-weight:600;font-size:15px}
+.req{color:var(--orange-ink)}
+.help{font-size:13px;color:var(--muted);margin-top:-2px}
+input[type=text],input[type=email],input[type=url],select,textarea{width:100%;font:inherit;color:var(--fg);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;transition:border-color .15s,box-shadow .15s}
+textarea{min-height:96px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 4px var(--focus)}
+.invalid input,.invalid select,.invalid textarea,.invalid .rank{border-color:#d0422b}
+.err{font-size:13px;color:#d0422b;display:none}
+.invalid .err{display:block}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts label{position:relative;cursor:pointer}
+.opts input{position:absolute;opacity:0;inset:0}
+.opts span{display:inline-block;padding:7px 13px;border:1.5px solid var(--line);border-radius:999px;font-size:14px;background:var(--bg);transition:all .12s}
+.opts input:checked+span{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
+.opts input:focus-visible+span{box-shadow:0 0 0 4px var(--focus)}
+
+/* Drag-to-rank */
+.rank{list-style:none;margin:0;padding:0;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg)}
+.rank li{display:flex;align-items:center;gap:12px;padding:9px 10px 9px 12px;border-top:1px solid var(--line);background:var(--surface);user-select:none;touch-action:none}
+.rank li:first-child{border-top:0}
+.rank li.dragging{opacity:.55;background:var(--bg)}
+.rank .n{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--orange-ink);width:22px;text-align:right;font-variant-numeric:tabular-nums}
+.rank .t{flex:1;min-width:0}
+.rank .handle{cursor:grab;color:var(--muted);padding:4px;font-family:var(--mono);letter-spacing:-2px}
+.rank .mv{all:unset;cursor:pointer;width:28px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--muted)}
+.rank .mv:hover{background:var(--bg);color:var(--fg)}
+.rank .mv:focus-visible{outline:2px solid var(--orange)}
+.rank .mv:disabled{opacity:.25;cursor:default}
+
+.submit{all:unset;box-sizing:border-box;cursor:pointer;text-align:center;background:var(--orange);color:#1b0d04;font-weight:600;font-size:16px;padding:13px 20px;border-radius:10px;transition:filter .15s}
+.submit:hover{filter:brightness(1.06)} .submit:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+
+.done{text-align:center;justify-items:center}
+.done .tick{width:56px;height:56px;border-radius:50%;background:var(--orange);color:#1b0d04;display:grid;place-items:center}
+.summary{width:100%;text-align:left;border-top:1px solid var(--line);padding-top:16px;display:grid;gap:10px;font-size:14px}
+.summary div{display:grid;grid-template-columns:minmax(0,40%) minmax(0,1fr);gap:12px}
+.summary dt{color:var(--muted)} .summary dd{margin:0;overflow-wrap:anywhere}
+
+footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em}
+
+@media (max-width:760px){.roles{grid-template-columns:1fr}.role{grid-template-rows:auto;grid-template-columns:44px 1fr;column-gap:14px}.role .glyph{grid-row:span 3}.role .go{grid-column:2}}
+@media (max-width:520px){.row2{grid-template-columns:1fr}.card{padding:20px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="wrap">
+    <nav class="nav">
+      <a class="mark" href="#" id="home-link"><b>VMN <span class="x">×</span> IDEA</b></a>
+      <span class="tag">Matchmaking</span>
+    </nav>
+    <div class="hero">
+      <h1>Find your match at <em>VMN × IDEA</em></h1>
+      <p>Tell us who you are and what you're looking for. We'll pair founders with the mentors and investors who fit them best.</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="view-roles">
+    <p class="eyebrow">Step 1 · I'm joining as a…</p>
+    <div class="roles" id="roles"></div>
+  </section>
+
+  <section id="view-form" hidden>
+    <div class="formwrap">
+      <button class="back" id="back" type="button">← Change role</button>
+      <form class="card" id="form" novalidate></form>
+    </div>
+  </section>
+
+  <section id="view-done" hidden>
+    <div class="formwrap">
+      <div class="card done" id="done"></div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">VMN × IDEA · Northeastern University</div></footer>
+
+<script>
+/* ============================================================
+   EDIT YOUR QUESTIONS HERE
+   Each role has a title, blurb, and a list of questions.
+   Question types: text, email, url, textarea, select, choice
+   (pick one), multi (pick many), rank (drag to order).
+   Add `required: true` to make a question mandatory.
+   ============================================================ */
+const ROLES = {
+  founder: {
+    title: "Founder",
+    blurb: "You're building a venture and want guidance, feedback, or funding.",
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>',
+    questions: [
+      { id:"name", label:"Full name", type:"text", required:true },
+      { id:"email", label:"Email", type:"email", required:true },
+      { id:"venture", label:"Venture name", type:"text", required:true },
+      { id:"stage", label:"Stage", type:"choice", options:["Idea","Prototype","Launched","Revenue"], required:true },
+      { id:"industry", label:"Industry", type:"select", options:["General Products","Tech","Fintech","Healthcare","Other"], required:true },
+      { id:"needs", label:"Rank what you need most", type:"rank", help:"Drag or use the arrows. Top = most important.",
+        options:["Product feedback","Go-to-market","Fundraising","Hiring","Legal & IP","Financial modeling"] },
+      { id:"pitch", label:"Describe your venture in two sentences", type:"textarea" }
+    ]
+  },
+  mentor: {
+    title: "Mentor",
+    blurb: "You've built or advised companies and want to coach a founding team.",
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+    questions: [
+      { id:"name", label:"Full name", type:"text", required:true },
+      { id:"email", label:"Email", type:"email", required:true },
+      { id:"company", label:"Current company & role", type:"text" },
+      { id:"linkedin", label:"LinkedIn URL", type:"url" },
+      { id:"industries", label:"Industries you know well", type:"multi", options:["General Products","Tech","Fintech","Healthcare","Other"] },
+      { id:"skills", label:"Rank your strengths", type:"rank", help:"Drag or use the arrows. Top = strongest.",
+        options:["Marketing & branding","Communication & presentation","Financial modeling","Software development","Data analysis","Business strategy"] },
+      { id:"teams", label:"How many teams can you mentor?", type:"choice", options:["1","2","3+"] }
+    ]
+  },
+  vc: {
+    title: "VC Firm",
+    blurb: "You invest in early-stage companies and want to meet promising founders.",
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/><path d="M15 8h5v5"/></svg>',
+    questions: [
+      { id:"name", label:"Your name", type:"text", required:true },
+      { id:"email", label:"Email", type:"email", required:true },
+      { id:"firm", label:"Firm name", type:"text", required:true },
+      { id:"website", label:"Firm website", type:"url" },
+      { id:"stages", label:"Stages you invest in", type:"multi", options:["Pre-seed","Seed","Series A","Series B+"] },
+      { id:"sectors", label:"Sector focus", type:"multi", options:["General Products","Tech","Fintech","Healthcare","Other"] },
+      { id:"check", label:"Typical check size", type:"select", options:["Under $50K","$50K – $250K","$250K – $1M","$1M+"] }
+    ]
+  }
+};
+</script>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const views = { roles:$('#view-roles'), form:$('#view-form'), done:$('#view-done') };
+  let current = null;
+
+  // Role cards
+  $('#roles').innerHTML = Object.entries(ROLES).map(([key,r]) =>
+    `<button class="role" type="button" data-role="${key}">
+       <span class="glyph">${r.icon}</span>
+       <h3>${esc(r.title)}</h3>
+       <p>${esc(r.blurb)}</p>
+       <span class="go">Continue as ${esc(r.title.toLowerCase())} →</span>
+     </button>`).join('');
+  $('#roles').addEventListener('click', e => {
+    const b = e.target.closest('[data-role]'); if (b) location.hash = b.dataset.role;
+  });
+  $('#back').addEventListener('click', () => { location.hash = ''; });
+  $('#home-link').addEventListener('click', e => { e.preventDefault(); location.hash = ''; });
+
+  function show(name){
+    Object.entries(views).forEach(([k,v]) => v.hidden = k !== name);
+    window.scrollTo({ top: name === 'roles' ? 0 : document.querySelector('main').offsetTop - 8, behavior: 'smooth' });
+  }
+
+  function fieldHTML(q, i){
+    const id = `q-${current}-${q.id}`;
+    const star = q.required ? ' <span class="req" aria-hidden="true">*</span>' : '';
+    const help = q.help ? `<div class="help">${esc(q.help)}</div>` : '';
+    const err = `<div class="err" role="alert">${q.type==='multi'?'Pick at least one option.':q.type==='email'?'Enter a valid email address.':'This one is required.'}</div>`;
+    const req = q.required ? 'required' : '';
+    switch(q.type){
+      case 'textarea':
+        return `<div class="field" data-q="${q.id}"><label for="${id}">${esc(q.label)}${star}</label>${help}<textarea id="${id}" name="${q.id}" ${req}></textarea>${err}</div>`;
+      case 'select':
+        return `<div class="field" data-q="${q.id}"><label for="${id}">${esc(q.label)}${star}</label>${help}<select id="${id}" name="${q.id}" ${req}><option value="">Select…</option>${q.options.map(o=>`<option>${esc(o)}</option>`).join('')}</select>${err}</div>`;
+      case 'choice': case 'multi': {
+        const t = q.type==='choice' ? 'radio' : 'checkbox';
+        return `<fieldset class="field" data-q="${q.id}" style="border:0;padding:0;margin:0"><legend class="lbl" style="padding:0;margin-bottom:6px">${esc(q.label)}${star}</legend>${help}<div class="opts">${q.options.map((o,j)=>`<label><input type="${t}" id="${id}-${j}" name="${q.id}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('')}</div>${err}</fieldset>`;
+      }
+      case 'rank':
+        return `<div class="field" data-q="${q.id}"><div class="lbl" id="${id}-l">${esc(q.label)}${star}</div>${help}<ol class="rank" id="${id}" aria-labelledby="${id}-l">${q.options.map(o=>`<li data-v="${esc(o)}"><span class="n"></span><span class="t">${esc(o)}</span><button type="button" class="mv" data-d="-1" aria-label="Move ${esc(o)} up">↑</button><button type="button" class="mv" data-d="1" aria-label="Move ${esc(o)} down">↓</button><span class="handle" aria-hidden="true">⋮⋮</span></li>`).join('')}</ol></div>`;
+      default:
+        return `<div class="field" data-q="${q.id}"><label for="${id}">${esc(q.label)}${star}</label>${help}<input type="${q.type}" id="${id}" name="${q.id}" ${req} autocomplete="${q.type==='email'?'email':q.id==='name'?'name':'off'}">${err}</div>`;
+    }
+  }
+
+  function renderForm(key){
+    current = key;
+    const r = ROLES[key];
+    const qs = r.questions;
+    // pair short fields (name + email) side by side
+    let html = `<div><span class="chip">${esc(r.title)}</span><h2>Tell us about yourself</h2></div><p class="sub">Fields marked <span class="req">*</span> are required.</p>`;
+    for (let i=0;i<qs.length;i++){
+      const a=qs[i], b=qs[i+1];
+      const short = q => q && ['text','email','url'].includes(q.type);
+      if (short(a) && short(b) && i%2===0){ html += `<div class="row2">${fieldHTML(a)}${fieldHTML(b)}</div>`; i++; }
+      else html += fieldHTML(a);
+    }
+    html += `<button class="submit" type="submit">Submit as ${esc(r.title.toLowerCase())}</button>`;
+    const form = $('#form');
+    form.innerHTML = html;
+    form.querySelectorAll('.rank').forEach(initRank);
+  }
+
+  // Ranking: pointer drag + arrow buttons
+  function renumber(ol){
+    const items=[...ol.children];
+    items.forEach((li,i)=>{ li.querySelector('.n').textContent=(i+1)+'.'; li.querySelector('[data-d="-1"]').disabled=i===0; li.querySelector('[data-d="1"]').disabled=i===items.length-1; });
+  }
+  function initRank(ol){
+    renumber(ol);
+    ol.addEventListener('click', e=>{
+      const b=e.target.closest('.mv'); if(!b||b.disabled) return;
+      const li=b.closest('li'); const d=+b.dataset.d;
+      if(d<0) ol.insertBefore(li, li.previousElementSibling); else ol.insertBefore(li.nextElementSibling, li);
+      renumber(ol); b.focus();
+    });
+    let drag=null;
+    ol.addEventListener('pointerdown', e=>{
+      if(e.target.closest('.mv')) return;
+      const li=e.target.closest('li'); if(!li) return;
+      drag=li; li.classList.add('dragging'); ol.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    ol.addEventListener('pointermove', e=>{
+      if(!drag) return;
+      const over=[...ol.children].find(li=>{ if(li===drag) return false; const r=li.getBoundingClientRect(); return e.clientY>r.top && e.clientY<r.bottom; });
+      if(!over) return;
+      const r=over.getBoundingClientRect();
+      ol.insertBefore(drag, e.clientY < r.top + r.height/2 ? over : over.nextElementSibling);
+      renumber(ol);
+    });
+    const end=()=>{ if(drag){ drag.classList.remove('dragging'); drag=null; } };
+    ol.addEventListener('pointerup', end); ol.addEventListener('pointercancel', end);
+  }
+
+  function collect(){
+    const form=$('#form'); const out=[]; let firstBad=null;
+    ROLES[current].questions.forEach(q=>{
+      const wrap=form.querySelector(`[data-q="${q.id}"]`); let val;
+      if(q.type==='rank') val=[...wrap.querySelectorAll('li')].map(li=>li.dataset.v);
+      else if(q.type==='multi') val=[...wrap.querySelectorAll('input:checked')].map(i=>i.value);
+      else if(q.type==='choice') val=(wrap.querySelector('input:checked')||{}).value||'';
+      else val=wrap.querySelector('input,select,textarea').value.trim();
+      let ok=true;
+      if(q.required && (Array.isArray(val)?!val.length:!val)) ok=false;
+      if(q.type==='email' && val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) ok=false;
+      wrap.classList.toggle('invalid', !ok);
+      if(!ok && !firstBad) firstBad=wrap;
+      out.push({q, val});
+    });
+    return {out, firstBad};
+  }
+
+  $('#form').addEventListener('submit', e=>{
+    e.preventDefault();
+    const {out, firstBad}=collect();
+    if(firstBad){ firstBad.scrollIntoView({behavior:'smooth',block:'center'}); const f=firstBad.querySelector('input,select,textarea'); f&&f.focus({preventScroll:true}); return; }
+    const r=ROLES[current];
+    const name=(out.find(o=>o.q.id==='name')||{}).val||'';
+    $('#done').innerHTML = `<span class="tick"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <h2>You're in${name?', '+esc(name.split(' ')[0]):''}.</h2>
+      <p class="sub" style="margin:0">Thanks for signing up as a ${esc(r.title.toLowerCase())}. We'll share your matches before the event.</p>
+      <dl class="summary">${out.filter(o=>Array.isArray(o.val)?o.val.length:o.val).map(o=>`<div><dt>${esc(o.q.label)}</dt><dd>${esc(Array.isArray(o.val)?(o.q.type==='rank'?o.val.map((v,i)=>`${i+1}. ${v}`).join(' · '):o.val.join(', ')):o.val)}</dd></div>`).join('')}</dl>
+      <button class="back" type="button" id="again" style="margin:0">← Back to start</button>`;
+    $('#again').addEventListener('click', ()=>{ location.hash=''; });
+    window.__lastSubmission = { role: current, answers: Object.fromEntries(out.map(o=>[o.q.id,o.val])) };
+    show('done');
+  });
+
+  // When live input changes, clear that field's error
+  $('#form').addEventListener('input', e=>{ const w=e.target.closest('.invalid'); if(w) w.classList.remove('invalid'); });
+
+  function route(){
+    const key=location.hash.slice(1);
+    if(ROLES[key]){ if(current!==key || views.form.hidden) renderForm(key); show('form'); }
+    else { current=null; show('roles'); }
+  }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+</body>
+</html>
