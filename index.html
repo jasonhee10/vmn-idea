@@ -381,7 +381,10 @@ const ROLES = {
   }
 
   const newSid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2);
-  const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
+  const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
+  // The sign-up this browser remembers was removed from the Sheet: forget it.
+  const isGone = d => d && d.ok === false && d.error === 'not_found';
+  function forgetSignup(){ store.del('vmn-last'); stopPolling(); goHome(); welcomeBack(); }
 
   // Looks up a submission by its random id. Uses JSONP so it works even
   // when the browser can't read Google's reply to the POST.
@@ -434,7 +437,7 @@ const ROLES = {
   function poll(){
     stopPolling();
     pollTimer=setTimeout(async ()=>{
-      try{ const d=await lookup(lastSid()); if(d && d.ok){ renderDone(d); return; } }catch(e){}
+      try{ const d=await lookup(lastSid()); if(d && d.ok){ renderDone(d); return; } if(isGone(d)){ forgetSignup(); return; } }catch(e){}
       poll();
     }, 9000 + Math.random()*4000);   // spread requests out a little
   }
@@ -516,7 +519,11 @@ const ROLES = {
     const b=$('#see-mine');
     if(b) b.addEventListener('click', async ()=>{
       b.disabled=true; b.textContent='Loading…';
-      try{ const d=await lookup(last.sid); if(d && d.ok){ renderDone(d); return; } }catch(e){}
+      try{
+        const d=await lookup(last.sid);
+        if(d && d.ok){ renderDone(d); return; }
+        if(isGone(d)){ store.del('vmn-last'); box.innerHTML='<span>We couldn\'t find your earlier sign-up. Please sign up again below.</span>'; return; }
+      }catch(e){}
       b.disabled=false; b.textContent="Couldn't load. Try again →";
     });
   }
