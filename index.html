@@ -84,6 +84,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);
 .invalid .err{display:block}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
+.scale-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.scale-head label{font-weight:600;font-size:15px}
+.scale-val{font-family:var(--display);font-weight:800;font-size:24px;line-height:1;color:var(--orange-ink);min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.scale{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;margin:4px 0 0;cursor:pointer}
+.scale::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:linear-gradient(to right,var(--orange) var(--pct),var(--line) var(--pct))}
+.scale::-moz-range-track{height:8px;border-radius:999px;background:var(--line)}
+.scale::-moz-range-progress{height:8px;border-radius:999px;background:var(--orange)}
+.scale::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-8px;border-radius:50%;background:var(--surface);border:3px solid var(--orange);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.scale::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--surface);border:3px solid var(--orange)}
+.scale:focus-visible{outline:none}
+.scale:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 5px var(--focus)}
+.scale:focus-visible::-moz-range-thumb{box-shadow:0 0 0 5px var(--focus)}
+.scale-ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:-2px}
 .opts{display:flex;flex-wrap:wrap;gap:8px}
 .opts label{position:relative;cursor:pointer}
 .opts input{position:absolute;opacity:0;inset:0}
@@ -222,7 +235,8 @@ const INDUSTRIES = [
 /* ============================================================
    EDIT YOUR QUESTIONS HERE
    Question types: text, email, url, textarea, select, choice
-   (pick one), multi (pick many), rank (drag to order).
+   (pick one), multi (pick many), rank (drag to order),
+   scale (slider: set min, max and a starting value).
    Add `required: true` to make a question mandatory.
    Matching uses these ids, so keep them as they are:
    founder: name, email, venture, industry, needs
@@ -257,8 +271,8 @@ const ROLES = {
       { id:"industries", label:"Industries you know well", type:"multi", options:INDUSTRIES, required:true },
       { id:"skills", label:"Rank your strengths", type:"rank", help:"Drag or use the arrows. Top = your strongest area. We use this to match you with founders.",
         options:SKILLS },
-      { id:"teams", label:"How many founders can you meet with?", type:"choice", options:["3","5","8","10"], required:true,
-        help:"Each founder is matched with up to 3 mentors." }
+      { id:"teams", label:"How many founders can you meet with?", type:"scale", min:3, max:10, value:5,
+        help:"Drag to choose. Each founder is matched with up to 3 mentors." }
     ]
   }
 };
@@ -306,6 +320,10 @@ const ROLES = {
       case 'choice': case 'multi': {
         const t = q.type==='choice' ? 'radio' : 'checkbox';
         return `<fieldset class="field" data-q="${q.id}" style="border:0;padding:0;margin:0"><legend class="lbl" style="padding:0;margin-bottom:6px">${esc(q.label)}${star}</legend>${help}<div class="opts">${q.options.map((o,j)=>`<label><input type="${t}" id="${id}-${j}" name="${q.id}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('')}</div>${err}</fieldset>`;
+      }
+      case 'scale': {
+        const mn=q.min??1, mx=q.max??10, v=q.value??mn;
+        return `<div class="field" data-q="${q.id}"><div class="scale-head"><label for="${id}">${esc(q.label)}${star}</label><output class="scale-val" for="${id}" id="${id}-out">${v}</output></div>${help}<input type="range" class="scale" id="${id}" name="${q.id}" min="${mn}" max="${mx}" step="1" value="${v}" style="--pct:${(v-mn)/(mx-mn)*100}%"><div class="scale-ends" aria-hidden="true"><span>${mn}</span><span>${mx}</span></div></div>`;
       }
       case 'rank':
         return `<div class="field" data-q="${q.id}"><div class="lbl" id="${id}-l">${esc(q.label)}${star}</div>${help}<ol class="rank" id="${id}" aria-labelledby="${id}-l">${q.options.map(o=>`<li data-v="${esc(o)}"><span class="n"></span><span class="t">${esc(o)}</span><button type="button" class="mv" data-d="-1" aria-label="Move ${esc(o)} up">↑</button><button type="button" class="mv" data-d="1" aria-label="Move ${esc(o)} down">↓</button><span class="handle" aria-hidden="true">⋮⋮</span></li>`).join('')}</ol></div>`;
@@ -370,6 +388,7 @@ const ROLES = {
       if(q.type==='rank') val=[...wrap.querySelectorAll('li')].map(li=>li.dataset.v);
       else if(q.type==='multi') val=[...wrap.querySelectorAll('input:checked')].map(i=>i.value);
       else if(q.type==='choice') val=(wrap.querySelector('input:checked')||{}).value||'';
+      else if(q.type==='scale') val=wrap.querySelector('input[type=range]').value;
       else val=wrap.querySelector('input,select,textarea').value.trim();
       let ok=true;
       if(q.required && (Array.isArray(val)?!val.length:!val)) ok=false;
@@ -549,7 +568,12 @@ const ROLES = {
   }
 
   // When live input changes, clear that field's error
-  $('#form').addEventListener('input', e=>{ const w=e.target.closest('.invalid'); if(w) w.classList.remove('invalid'); });
+  $('#form').addEventListener('input', e=>{
+    if(e.target.matches('input[type=range]')){
+      const r=e.target, pct=(r.value-r.min)/(r.max-r.min)*100;
+      r.style.setProperty('--pct', pct+'%');
+      const out=document.getElementById(r.id+'-out'); if(out) out.textContent=r.value;
+    } const w=e.target.closest('.invalid'); if(w) w.classList.remove('invalid'); });
 
   function route(){
     const key=location.hash.slice(1);
