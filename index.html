@@ -166,7 +166,7 @@ footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mon
     </nav>
     <div class="hero">
       <h1>Find your match at <em>VMN × IDEA</em></h1>
-      <p>Tell us who you are and what you're looking for. Each founder is matched with up to three mentors and investors whose strengths fit their biggest challenges.</p>
+      <p>Tell us who you are and what you're looking for. Each founder is matched with up to three mentors whose strengths fit their biggest challenges.</p>
     </div>
   </div>
 </header>
@@ -272,7 +272,7 @@ const ROLES = {
       { id:"industries", label:"Industries you know well", type:"multi", options:INDUSTRIES, required:true },
       { id:"skills", label:"Rank your strengths", type:"rank", help:"Drag or use the arrows. Top = your strongest area. We use this to match you with founders.",
         options:SKILLS },
-      { id:"teams", label:"How many founders can you meet with?", type:"scale", min:1, max:10, value:5,
+      { id:"teams", label:"How many founders can you meet with?", type:"scale", min:3, max:10, value:5,
         help:"Drag to choose. Each founder is matched with up to 3 mentors." }
     ]
   }
