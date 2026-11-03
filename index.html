@@ -199,7 +199,7 @@ footer{border-top:1px solid var(--line);padding-block:20px;font-family:var(--mon
    SUBMIT_URL: paste your Google Apps Script web-app URL here
    (see setup steps). Leave "" to run without saving.
    ============================================================ */
-const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbzyyKmeF-0zSBomkWbAc1D8PQmGxcvaFKLREZiVNbQ36pA7ip__kM13S_RnqnZrXiPW/exec";
+const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbzsh1Y4i40gDJPnVjb_FeGyNk6yKC-C8HiH263Uhqv7XjvkyTR3yLUpPOnV-sYLuP4S/exec";
 
 /* Founders rank what they NEED, mentors rank their STRENGTHS.
    Both use this same list so they can be matched. */
@@ -271,7 +271,7 @@ const ROLES = {
       { id:"industries", label:"Industries you know well", type:"multi", options:INDUSTRIES, required:true },
       { id:"skills", label:"Rank your strengths", type:"rank", help:"Drag or use the arrows. Top = your strongest area. We use this to match you with founders.",
         options:SKILLS },
-      { id:"teams", label:"How many founders can you meet with?", type:"scale", min:3, max:10, value:5,
+      { id:"teams", label:"How many founders can you meet with?", type:"scale", min:1, max:10, value:5,
         help:"Drag to choose. Each founder is matched with up to 3 mentors." }
     ]
   }
@@ -415,7 +415,19 @@ const ROLES = {
     try { return await lookupOnce(sid); }
     catch(e){ await new Promise(r=>setTimeout(r,1500)); return lookupOnce(sid); }
   }
-  function lookupOnce(sid){
+  // Ask by POST first (same path as the sign-up). Google often rejects GET
+  // requests from browsers signed into several Google accounts.
+  async function lookupOnce(sid){
+    const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(), 25000);
+    try{
+      const res=await fetch(SUBMIT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'lookup', ref:sid}),signal:ctrl.signal});
+      const d=await res.json();
+      if(d && (d.ok || d.error==='not_found')) return d;
+    }catch(e){ /* fall back to the GET lookup below */ }
+    finally{ clearTimeout(t); }
+    return lookupJsonp(sid);
+  }
+  function lookupJsonp(sid){
     return new Promise((resolve,reject)=>{
       const cb='vmncb_'+Math.random().toString(36).slice(2);
       const s=document.createElement('script');
